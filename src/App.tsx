@@ -42,10 +42,10 @@ function App() {
   const [streamNonce, setStreamNonce] = useState(() => Date.now());
 
   const cameraFeeds = [
-    { title: 'Camera 1', topic: '/rishi/cam', compressed: false },
-    { title: 'Camera 2', topic: '/rishi/cam', compressed: true },
-    { title: 'Camera 3', topic: '/rishi/cam', compressed: true },
-    { title: 'Camera 4', topic: '/rishi/cam', compressed: true },
+    { title: 'Camera 1', topic: '/cam0/image_raw', compressed: false },
+    { title: 'Camera 2', topic: '/cam1/image_raw', compressed: false },
+    { title: 'Camera 3', topic: '/cam2/image_raw', compressed: false },
+    { title: 'Camera 4', topic: '/cam3/image_raw', compressed: false },
   ];
 
   const rosRef = useRef<ROSLIB.Ros | null>(null);
