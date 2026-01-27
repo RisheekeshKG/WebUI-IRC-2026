@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    background-color: #000;
+    color: #f3f4f6;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overscroll-behavior: none;
+  }
+}
+
+/* Navigation Link Styles */
+.nav-link {
+  position: relative;
+  padding: 0.5rem 1rem;
+  color: #d1d5db;
+  transition: color 300ms ease, background-color 300ms ease, border-color 300ms ease;
+}
+
+@media (min-width: 640px) {
+  .nav-link {
+    padding: 0.75rem 1.25rem;
+  }
+}
+
+.nav-link:hover,
+.nav-link:focus-visible {
+  color: #fff;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: #a855f7;
+  transition: width 300ms ease;
+}
+
+.nav-link:hover::after,
+.nav-link:focus-visible::after {
+  width: 100%;
+}
+
+/* Gradient Text */
+.gradient-text {
+  background-image: linear-gradient(to right, #000000, #db2777);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+@media (min-width: 640px) {
+  .gradient-text {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .gradient-text {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+  }
+}
+
+/* Card Component */
+.card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  background-color: #111827;
+  padding: 1.5rem;
+  transition: transform 300ms ease;
+}
+
+.card:hover {
+  transform: scale(1.05);
+}
+
+.card:active {
+  transform: scale(1);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(to right, rgba(168, 85, 247, 0.1), rgba(236, 72, 153, 0.1));
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.card:hover::before,
+.card:active::before {
+  opacity: 1;
+}
+
+/* Responsive Typography for mobile screens */
+.text-responsive {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .text-responsive {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .text-responsive {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+}
