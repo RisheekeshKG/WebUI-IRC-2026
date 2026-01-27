@@ -54,7 +54,7 @@ function Joystick({
 
   return (
       <JoystickComponent
-        size={200}
+        size={100}
         baseColor="rgba(0, 255, 204, 0.15)"
         stickColor="#00ffcc"
         move={handleMove}

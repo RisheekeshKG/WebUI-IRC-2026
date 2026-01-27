@@ -40,6 +40,32 @@ function App() {
   const [bmeData, setBmeData] = useState<BMEData>({});
   const [soilData, setSoilData] = useState<SoilData>({});
   const [streamNonce, setStreamNonce] = useState(() => Date.now());
+  // GPS state
+  const [gpsData, setGpsData] = useState({
+    latitude: '—',
+    longitude: '—',
+    status: 'Disconnected',
+    statusColor: '#fa0',
+  });
+  // Subscribe to _gpstest topic for GPS data
+  useEffect(() => {
+    if (!rosRef.current) return;
+    const gpsTopic = new ROSLIB.Topic({
+      ros: rosRef.current,
+      name: '/fix',
+      messageType: 'sensor_msgs/msg/NavSatFix',
+    });
+    const handleGpsMsg = (msg: any) => {
+      setGpsData({
+        latitude: msg.latitude ? msg.latitude.toFixed(8) : '—',
+        longitude: msg.longitude ? msg.longitude.toFixed(8) : '—',
+        status: 'Connected',
+        statusColor: '#00ffcc',
+      });
+    };
+    gpsTopic.subscribe(handleGpsMsg);
+    return () => gpsTopic.unsubscribe();
+  }, []);
 
   const cameraFeeds = [
     { title: 'Camera 1', topic: '/cam0/image_raw', compressed: false },
@@ -354,10 +380,22 @@ function App() {
               <div className="text-sm text-slate-300">Altitude: {bmeData.altitude || '—'}</div>
             </div>
 
+            {/* GPS Data Box */}
+            <div className="p-4 rounded-xl border border-white/10 bg-[#121318] shadow-[0_8px_30px_rgba(0,0,0,0.35)] shrink-0 mb-2">
+              <h4 className="heading-gradient text-base font-semibold mb-1">GPS</h4>
+              <div className="text-sm text-slate-300">Latitude: <span className="font-mono">{gpsData.latitude}</span></div>
+              <div className="text-sm text-slate-300">Longitude: <span className="font-mono">{gpsData.longitude}</span></div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className={`w-3 h-3 rounded-full`} style={{backgroundColor: gpsData.statusColor}}></span>
+                <span className="text-xs text-slate-400">{gpsData.status}</span>
+              </div>
+            </div>
+
+            {/* Joystick Box (smaller) */}
             <div className="rounded-xl border border-white/10 bg-[#0f1014] p-4 shadow-[0_8px_30px_rgba(0,0,0,0.35)] flex-1 flex flex-col">
               <h4 className="heading-gradient text-base font-semibold mb-2 shrink-0">Joystick</h4>
               <div className="w-full flex justify-center items-center flex-1">
-                <div className="w-[200px]">
+                <div className="w-[120px]">
                   <Joystick
                     linearMul={linearMul}
                     angularMul={angularMul}
