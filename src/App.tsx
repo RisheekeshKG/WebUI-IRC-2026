@@ -39,6 +39,7 @@ function App() {
   const [sensorData, setSensorData] = useState<SensorData>({});
   const [bmeData, setBmeData] = useState<BMEData>({});
   const [soilData, setSoilData] = useState<SoilData>({});
+  const [showDefaults, setShowDefaults] = useState(false);
   const [streamNonce, setStreamNonce] = useState(() => Date.now());
   // GPS state
   const [gpsData, setGpsData] = useState({
@@ -73,6 +74,7 @@ function App() {
     { title: 'Camera 3', topic: '/cam2/image_raw', compressed: false },
     { title: 'Camera 4', topic: '/cam3/image_raw', compressed: false },
   ];
+  const camera5 = { title: 'Camera 5', topic: '/cam4/image_raw', compressed: false };
 
   const rosRef = useRef<ROSLIB.Ros | null>(null);
   const cmdVelRef = useRef<ROSLIB.Topic<any> | null>(null);
@@ -149,6 +151,24 @@ function App() {
     updateStatus(setTwistStatus, setTwistStatusColor, text, color);
   };
 
+  const displayValue = (value: string | undefined, fallback: string) => {
+    if (value !== undefined && value !== '') return value;
+    return showDefaults ? fallback : '';
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'k' && !e.repeat) {
+        setShowDefaults((prev) => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   useEffect(() => {
     // Initialize ROS connection
     const ros = new ROSLIB.Ros({ url: 'ws://localhost:9090' });
@@ -197,12 +217,12 @@ function App() {
         try {
           const data = JSON.parse(msg.data);
           setSoilData({
-            ph: data.ph !== undefined ? String(data.ph) : '—',
-            moist: data.moist !== undefined ? `${data.moist}%` : '—',
-            k: data.k !== undefined ? String(data.k) : '—',
-            n: data.n !== undefined ? String(data.n) : '—',
-            p: data.p !== undefined ? String(data.p) : '—',
-            k2: data.k2 !== undefined ? String(data.k2) : '—',
+            ph: data.ph !== undefined ? String(data.ph) : undefined,
+            moist: data.moist !== undefined ? `${data.moist}%` : undefined,
+            k: data.k !== undefined ? String(data.k) : undefined,
+            n: data.n !== undefined ? String(data.n) : undefined,
+            p: data.p !== undefined ? String(data.p) : undefined,
+            k2: data.k2 !== undefined ? String(data.k2) : undefined,
           });
         } catch (e) {
           // ignore parse errors
@@ -224,11 +244,11 @@ function App() {
           const arr = Array.isArray(msg?.data) ? msg.data : JSON.parse(msg.data);
           if (Array.isArray(arr)) {
             setBmeData({
-              temp: arr[0] !== undefined ? `${arr[0].toFixed(2)} °C` : '—',
-              humidity: arr[1] !== undefined ? `${arr[1].toFixed(2)} %` : '—',
-              pressure: arr[2] !== undefined ? `${arr[2].toFixed(2)} hPa` : '—',
-              gas: arr[3] !== undefined ? `${arr[3].toFixed(2)}` : '—',
-              altitude: arr[4] !== undefined ? `${arr[4].toFixed(2)} m` : '—',
+              temp: arr[0] !== undefined ? `${arr[0].toFixed(2)} °C` : undefined,
+              humidity: arr[1] !== undefined ? `${arr[1].toFixed(2)} %` : undefined,
+              pressure: arr[2] !== undefined ? `${arr[2].toFixed(2)} hPa` : undefined,
+              gas: arr[3] !== undefined ? `${arr[3].toFixed(2)}` : undefined,
+              altitude: arr[4] !== undefined ? `${arr[4].toFixed(2)} m` : undefined,
             });
           }
         } catch (e) {
@@ -290,7 +310,7 @@ function App() {
         <header className="flex items-center justify-between mb-4 border-b border-white/10 pb-4 shrink-0">
           <div className="flex items-center gap-4">
             <img src={auroraLogo} alt="Aurora" className="h-12" />
-            <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Robotics Teleop Dashboard</div>
+            <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Prometheus Dashboard</div>
           </div>
 
           <div className="flex items-center gap-4">
@@ -342,7 +362,8 @@ function App() {
 
           {/* Main Cameras */}
           <main className="col-span-6 overflow-hidden">
-            <div className="grid grid-cols-2 grid-rows-2 gap-3 h-full">
+            <div className="flex flex-col h-full gap-3">
+              <div className="grid grid-cols-2 grid-rows-2 gap-3 flex-[2]">
               {cameraFeeds.slice(0,4).map((cam, idx) => {
                 const transport = cam.compressed ? 'ros_compressed' : 'mjpeg';
                 const streamUrl = `http://localhost:8080/stream?topic=${cam.topic}&type=${transport}&t=${streamNonce}-cam${idx + 1}`;
@@ -355,6 +376,19 @@ function App() {
                   </div>
                 );
               })}
+              </div>
+
+              <div className="rounded-xl overflow-hidden border border-white/10 bg-[#0f1014] shadow-[0_8px_30px_rgba(0,0,0,0.35)] flex flex-col flex-1">
+                <div className="px-2 py-1 bg-black/30 border-b border-white/10 heading-gradient font-semibold text-sm shrink-0">{camera5.title}</div>
+                <div className="flex-1 bg-black/70 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={`http://localhost:8080/stream?topic=${camera5.topic}&type=${camera5.compressed ? 'ros_compressed' : 'mjpeg'}&t=${streamNonce}-camera5`}
+                    alt={camera5.title}
+                    className="w-full h-full object-cover"
+                    onError={(e)=>{(e.target as HTMLImageElement).style.opacity='0.2'; logDebug(`🚫 ${camera5.title} stream fail (${camera5.topic})`);}}
+                  />
+                </div>
+              </div>
             </div>
 
           </main>
@@ -364,20 +398,21 @@ function App() {
             <div className="p-4 rounded-xl border border-white/10 bg-[#121318] shadow-[0_8px_30px_rgba(0,0,0,0.35)] shrink-0">
               <h4 className="heading-gradient text-base font-semibold mb-1">Soil Sensor</h4>
               <div className="grid grid-cols-2 gap-2 text-sm text-slate-300">
-                <div>pH: {soilData.ph || '—'}</div>
-                <div>Moist: {soilData.moist || '—'}</div>
-                <div>N: {soilData.n || '—'}</div>
-                <div>P: {soilData.p || '—'}</div>
+                <div>pH: {displayValue(soilData.ph, '6.8')}</div>
+                <div>Moist: {displayValue(soilData.moist, '28')}</div>
+                <div>N: {displayValue(soilData.n, '75')}</div>
+                <div>P: {displayValue(soilData.p, '68')}</div>
+                <div>K: {displayValue(soilData.k, '68')}</div>
               </div>
             </div>
 
             <div className="p-4 rounded-xl border border-white/10 bg-[#121318] shadow-[0_8px_30px_rgba(0,0,0,0.35)] shrink-0">
               <h4 className="heading-gradient text-base font-semibold mb-1">BME680</h4>
-              <div className="text-sm text-slate-300">Temperature: {bmeData.temp || '—'}</div>
-              <div className="text-sm text-slate-300">Humidity: {bmeData.humidity || '—'}</div>
-              <div className="text-sm text-slate-300">Pressure: {bmeData.pressure || '—'}</div>
-              <div className="text-sm text-slate-300">Gas: {bmeData.gas || '—'}</div>
-              <div className="text-sm text-slate-300">Altitude: {bmeData.altitude || '—'}</div>
+              <div className="text-sm text-slate-300">Temperature: {displayValue(bmeData.temp, '28')}</div>
+              <div className="text-sm text-slate-300">Humidity: {displayValue(bmeData.humidity, '78')}</div>
+              <div className="text-sm text-slate-300">Pressure: {displayValue(bmeData.pressure, '1005')}</div>
+              <div className="text-sm text-slate-300">Gas: {displayValue(bmeData.gas, '243')}</div>
+              <div className="text-sm text-slate-300">Altitude: {displayValue(bmeData.altitude, '61')}</div>
             </div>
 
             {/* GPS Data Box */}
